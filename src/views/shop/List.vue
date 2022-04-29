@@ -1,82 +1,55 @@
 <template>
   <section>
-    <a-card title="店铺列表" size="small">
-      <a-table
-          size="small"
-          :bordered="true"
-          :columns="columns"
-          :row-key="(record,index) => index"
-          :data-source="dataList"
-          :pagination="pagination"
-          @resizeColumn="handleResizeColumn"
-      >
-      </a-table>
+    <a-card size="small">
+      <td-table
+          ref="table"
+          :data-source="parameter=>dataSource(parameter)">
+        <template #Search="{formState}">
+          <a-form-item label="ID" name="id">
+            <a-input-number v-model:value="formState.id" />
+          </a-form-item>
+          <a-form-item label="名称" name="name">
+            <a-input v-model:value="formState.name" />
+          </a-form-item>
+          <a-form-item label="图标" name="icon">
+            <a-input v-model:value="formState.icon" />
+          </a-form-item>
+          <a-form-item label="链接" name="link">
+            <a-input v-model:value="formState.link" />
+          </a-form-item>
+          <a-form-item label="排序" name="sort">
+            <a-input-number v-model:value="formState.sort" />
+          </a-form-item>
+        </template>
+        <template #Columns>
+          <a-table-column title="ID" data-index="id" :sorter="true" />
+          <a-table-column title="名称" data-index="name"  />
+          <a-table-column title="图标" data-index="icon"  />
+          <a-table-column title="链接" data-index="link"  />
+          <a-table-column title="排序" data-index="sort" :sorter="true" />
+        </template>
+      </td-table>
     </a-card>
   </section>
 </template>
 
 <script>
-
+import TdTable from "../../components/TdTable/TdTable";
 export default {
   name: "List",
-  components: {},
+  components: {TdTable},
   data() {
     return {
-      columns: [
-        {
-          title: 'id',
-          dataIndex: 'id',
-          key: 'id',
-          resizable: true,
-          width: 150,
-        },
-        {
-          title: 'name',
-          dataIndex: 'name',
-          key: 'name',
-          resizable: true,
-          width: 100,
-          minWidth: 100,
-          maxWidth: 200,
-        }, {
-          title: 'Address',
-          dataIndex: 'address',
-          key: 'address',
-        }, {
-          title: 'Tags',
-          key: 'tags',
-          dataIndex: 'tags',
-        }, {
-          title: 'Action',
-          key: 'action',
-        }
-        ],
-      data:[],
-      dataList:[],
-      pagination:{
-        total: 200,
-        current: 1,
-        pageSize: 20,
-      }
     }
   },
   created() {
-    this.dataSource()
   },
   methods: {
-    dataSource(){
-      this.$request({
-        url:"/fresh/shopAppMenu/page",
-        params:{
-          page:this.pagination.current,
-          size:this.pagination.pageSize,
-        }
-      }).then(res=>{
-        this.dataList = res.data.records
-        this.pagination.current=res.data.current
-        this.pagination.pageSize=res.data.size
-        this.pagination.total=res.data.total
-
+    dataSource(params) {
+      return  this.$request({
+        url: "/fresh/shopAppMenu/page",
+        method:"POST",
+        params: params
       })
     },
     handleResizeColumn: (w, col) => {
