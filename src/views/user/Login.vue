@@ -4,6 +4,7 @@
         :model="formData"
         :rules="formRules"
         name="custom-validation"
+        @finish="toLogin"
         ref="formRef"
     >
       <a-form-item has-feedback name="username">
@@ -38,7 +39,7 @@
         </a-row>
       </a-input-group>
       <a-form-item>
-        <a-button size="large" :loading="loginLoading" type="primary" block @click="toLogin" style="height: 40px;">登录</a-button>
+        <a-button size="large" :loading="loginLoading" type="primary"  block html-type="submit" style="height: 40px;">登录</a-button>
       </a-form-item>
       <a-form-item>
         <div class="user-login-other">
