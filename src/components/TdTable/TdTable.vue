@@ -36,11 +36,10 @@
           <a-col flex="200px"><span class="table-title">{{ title }}</span></a-col>
           <a-col class="table-header-right" flex="auto"
                  style="display: flex;align-items: center;justify-content: flex-end;">
-            <a-button v-if="$slots['addItem']" type="primary" size="small" @click="onVisible('addItem','addFormState')"><plus-outlined/>新增</a-button>
-            <a-tooltip>
-              <template #title>刷新</template>
-              <ReloadOutlined class="table-header-icon"/>
-            </a-tooltip>
+            <a-button v-if="$slots['AddItem']" type="primary" size="small" @click="onVisible('addItem','addFormState')">
+              <plus-outlined/>
+              新增
+            </a-button>
             <a-tooltip v-if="items.length>0">
               <template #title>列设置</template>
               <a-popover trigger="click" placement="bottomRight">
@@ -49,15 +48,15 @@
                   <a-button type="link" style="padding: 0;">重置</a-button>
                 </template>
                 <template #content>
-                    <Container @drop="onDrop">
-                      <Draggable v-for="(item, i) in items" :key="item.id">
-                        <div style="display: flex;align-items: center;margin-bottom: 8px">
-                          <img style="margin-right: 5px;margin-left: -14px;cursor: move;" width="14" height="14"
-                               src="../../assets/icon/info-darg.svg"/>
-                          <a-checkbox :value="i">列展示{{ i }}</a-checkbox>
-                        </div>
-                      </Draggable>
-                    </Container>
+                  <Container @drop="onDrop">
+                    <Draggable v-for="(item, i) in items" :key="item.id">
+                      <div style="display: flex;align-items: center;margin-bottom: 8px">
+                        <img style="margin-right: 5px;margin-left: -14px;cursor: move;" width="14" height="14"
+                             src="../../assets/icon/info-darg.svg"/>
+                        <a-checkbox :value="i">列展示{{ i }}</a-checkbox>
+                      </div>
+                    </Draggable>
+                  </Container>
                 </template>
                 <setting-outlined class="table-header-icon"/>
               </a-popover>
@@ -77,38 +76,40 @@
       </slot>
       <a-table-column v-if="$slots['Action'] || deleteItemOk" title="操作" align="center">
         <template #default="{ record }">
-        <slot name="Action">
-        </slot>
-        <a v-if="$slots['editItem']" @click="onVisible('editItem','editFormState')">编辑</a>
-        <a-divider v-if="$slots['editItem'] && deleteItemOk" type="vertical" />
-        <a-popconfirm
-            title="是否需要删除此项?"
-            ok-text="删除"
-            cancel-text="取消"
-            :okButtonProps="{'danger':true}"
-            @confirm="deleteItemOk(record)">
-          <a v-if="deleteItemOk" style="color: #FF4D4FFF;">删除</a>
-        </a-popconfirm>
+          <slot name="Action">
+          </slot>
+          <a v-if="$slots['EditItem']" @click="onVisible('editItem','editFormState',record)">编辑</a>
+          <a-divider v-if="$slots['EditItem'] && deleteItemOk" type="vertical"/>
+          <a-popconfirm
+              title="是否需要删除此项?"
+              ok-text="删除"
+              cancel-text="取消"
+              :okButtonProps="{'danger':true}"
+              @confirm="onDeleteItemOk(record)">
+            <a v-if="deleteItemOk" style="color: #FF4D4FFF;">删除</a>
+          </a-popconfirm>
         </template>
       </a-table-column>
     </a-table>
-    <a-modal v-if="$slots['addItem']" title="新增" v-model:visible="visible.addItem" autoFocusButton="ok" @ok="addItemOk" destroyOnClose>
+    <a-modal v-if="$slots['AddItem']" title="新增" v-model:visible="visible.addItem" autoFocusButton="ok" @ok="onAddItem" destroyOnClose>
       <a-form
           name="addItem"
+          ref="addItem"
           :model="formState.addFormState"
           autocomplete="off"
       >
         <slot name="AddItem" :formState="formState.addFormState"></slot>
       </a-form>
     </a-modal>
-    <a-modal v-if="$slots['editItem']" title="编辑" v-model:visible="visible.editItem" autoFocusButton="ok" @ok="editItemOk" destroyOnClose>
-        <a-form
-            name="editItem"
-            :model="formState.editFormState"
-            autocomplete="off"
-        >
-          <slot name="EditItem" :formState="formState.editFormState"></slot>
-        </a-form>
+    <a-modal v-if="$slots['EditItem']" title="编辑" v-model:visible="visible.editItem" autoFocusButton="ok" @ok="onEditItem" destroyOnClose>
+      <a-form
+          name="editItem"
+          ref="editItem"
+          :model="formState.editFormState"
+          autocomplete="off"
+      >
+        <slot name="EditItem" :formState="formState.editFormState"></slot>
+      </a-form>
     </a-modal>
   </section>
 </template>
@@ -116,7 +117,6 @@
 <script>
 import {
   SearchOutlined,
-  ReloadOutlined,
   SettingOutlined,
   ImportOutlined,
   DownloadOutlined,
@@ -128,8 +128,8 @@ import {Container, Draggable} from "vue3-smooth-dnd";
 export default {
   name: 'TdTable',
   props: {
-    title:{
-      type:String,
+    title: {
+      type: String,
       default() {
         return ""
       }
@@ -140,7 +140,7 @@ export default {
         return []
       }
     },
-    addItemOk:{
+    addItemOk: {
       type: Function,
       default() {
         return function (data) {
@@ -148,7 +148,7 @@ export default {
         }
       }
     },
-    editItemOk:{
+    editItemOk: {
       type: Function,
       default() {
         return function (data) {
@@ -156,7 +156,7 @@ export default {
         }
       }
     },
-    deleteItemOk:{
+    deleteItemOk: {
       type: Function,
     },
     loadDataComplete: {
@@ -182,7 +182,6 @@ export default {
   },
   components: {
     SearchOutlined,
-    ReloadOutlined,
     SettingOutlined,
     ImportOutlined,
     DownloadOutlined,
@@ -194,17 +193,14 @@ export default {
     let search = Object.assign({}, this.searchData)
     return {
 
-      items: [
-      ],
-      formState:{
-        addFormState:{
-
-        },
-        editFormState:{}
+      items: [],
+      formState: {
+        addFormState: {},
+        editFormState: {}
       },
-      visible:{
-        addItem:false,
-        editItem:false,
+      visible: {
+        addItem: false,
+        editItem: false,
       },
       searchForm: search,
       addForm: [],
@@ -238,9 +234,34 @@ export default {
     }
   },
   methods: {
-    onVisible(visible,formState){
-      console.log(visible,formState)
-      this.formState[formState] = {}
+    onAddItem(){
+      this.$refs.addItem.validateFields().then(values => {
+        this.addItemOk(values)
+      }).catch(info => {
+        console.log('Validate Failed:', info);
+      });
+
+    },
+    onEditItem(){
+      this.$refs.editItem.validateFields().then(values => {
+        this.editItemOk(values)
+      }).catch(info => {
+        console.log('Validate Failed:', info);
+      });
+    },
+    onDeleteItemOk(item) {
+      this.deleteItemOk(item)
+          .then(res => {
+            if (res.code===200){
+              this.loadData()
+            }else {
+              this.$message.error(res.msg)
+            }
+          })
+    },
+    onVisible(visible, formState,record) {
+      console.log(visible, formState,record)
+      this.formState[formState] = Object.assign({},record) || {}
       this.visible[visible] = true
     },
     onDrop(dropResult) {
@@ -275,10 +296,10 @@ export default {
     handleTableChange(pagination, filters, sorter) {
       console.log(sorter)
       if (sorter && sorter.field) {
-        if (sorter.order){
-          this.searchForm.sorter = sorter.field + "," + sorter.order.replace("end","")
-        }else {
-          this.searchForm.sorter =undefined
+        if (sorter.order) {
+          this.searchForm.sorter = sorter.field + "," + sorter.order.replace("end", "")
+        } else {
+          this.searchForm.sorter = undefined
         }
       }
       this.searchForm.page = pagination.current
@@ -357,23 +378,29 @@ export default {
   font-size: 16px;
   font-weight: bold;
 }
-.table-list{
+
+.table-list {
   background: #fff;
 }
+
 .table-header-right > * {
   margin-right: 16px;
 
 }
-.table-striped{
+
+.table-striped {
   background-color: #fafafa;
 }
-.table-search .ant-form-item .ant-form-item-control .ant-form-item-control-input .ant-form-item-control-input-content>.ant-input,.table-search .ant-form-item .ant-form-item-control .ant-form-item-control-input .ant-form-item-control-input-content>.ant-input-number{
+
+.table-search .ant-form-item .ant-form-item-control .ant-form-item-control-input .ant-form-item-control-input-content > .ant-input, .table-search .ant-form-item .ant-form-item-control .ant-form-item-control-input .ant-form-item-control-input-content > .ant-input-number {
   width: 100%;
 }
-.table-search .ant-form-item{
+
+.table-search .ant-form-item {
   width: 280px;
 }
-.table-search  .long-value{
+
+.table-search .long-value {
   width: auto;
 }
 

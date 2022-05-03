@@ -4,6 +4,8 @@
         title="订单记录"
         ref="table"
         :delete-item-ok="deleteItem"
+        :add-item-ok="addItem"
+        :edit-item-ok="editItem"
         :data-source="parameter=>dataSource(parameter)">
       <template #Search="{formState}">
         <a-form-item label="ID" name="id" >
@@ -38,7 +40,7 @@
         <a-table-column title="cpc销售价" data-index="cpcCabinPrice" align="center"  />
         <a-table-column title="成人销售价" data-index="adultPrice" align="center"  />
       </template>
-      <template #editItem="{formState}">
+      <template #AddItem="{formState}">
         <a-form-item
             label="Username"
             name="username"
@@ -52,18 +54,16 @@
           <a-input-password v-model:value="formState.password" />
         </a-form-item>
       </template>
-      <template #addItem="{formState}">
+      <template #EditItem="{formState}">
         <a-form-item
-            label="Username"
-            name="username"
-        >
-          <a-input v-model:value="formState.username" />
+            label="订单号"
+            name="orderNo">
+          <a-input v-model:value="formState.orderNo" />
         </a-form-item>
         <a-form-item
-            label="Password"
-            name="password"
-        >
-          <a-input-password v-model:value="formState.password" />
+            label="ID"
+            name="id">
+          <a-input v-model:value="formState.id" />
         </a-form-item>
       </template>
     </td-table>
@@ -91,8 +91,20 @@ export default {
         params: params
       })
     },
+    addItem(values){
+      console.log(values)
+    },
+    editItem(values){
+      console.log(values)
+    },
     deleteItem(item){
-      console.log(item)
+      return this.$request({
+        url: "/fresh/shopRecord/removeById",
+        method:"POST",
+        params: {
+          id:item.id
+        }
+      })
     }
   }
 }
