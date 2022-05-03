@@ -3,61 +3,45 @@
     <a-form v-if="$slots['Search']"
             class="table-search"
             style="margin-bottom: 16px;" :layout="'inline'"
-            :model="searchForm" v-bind="{
-            labelCol: {
-            style: {
-                width: '75px',
-              },
-            },
-            wrapperCol: {
-              span: 16,
-            }}"
+            :model="searchForm"
             autocomplete="off"
+            ref="searchForm"
             @finish="onSearch"
     >
       <slot name="Search" :formState="searchForm"></slot>
-      <a-form-item>
-        <a-button size="small" type="primary" html-type="submit">
+      <a-form-item style="width: 138px;">
+        <a-button type="primary" html-type="submit">
           <template #icon>
             <SearchOutlined/>
           </template>
           搜 索
         </a-button>
+        <a-button style="margin-left: 10px" @click="$refs.searchForm.resetFields()">重 置</a-button>
       </a-form-item>
     </a-form>
-    <div class="table-header">
-
-    </div>
     <a-table
         class="table-list"
         size="small"
         :bordered="false"
-        :row-key="(record,index) => index"
+        :row-key="(record) => record.id"
         :data-source="data.records"
         :pagination="data"
         :loading="spinning"
+        :sortDirections="['ascend', 'descend']"
         v-bind="$attrs"
+        :row-class-name="(_record, index) => (index % 2 === 1 ? 'table-striped' : null)"
         @change="handleTableChange">
       <template #title>
-        <a-row type="flex" style="padding: 5px 0">
-          <a-col flex="100px"><span class="table-title">店铺列表</span></a-col>
+        <a-row type="flex" style="padding: 5px 0;display: flex;align-items: center;">
+          <a-col flex="200px"><span class="table-title">{{ title }}</span></a-col>
           <a-col class="table-header-right" flex="auto"
                  style="display: flex;align-items: center;justify-content: flex-end;">
-            <a-button size="small" type="primary" html-type="submit">
-              <template #icon>
-                <plus-outlined/>
-              </template>
-              新 增
-            </a-button>
-            <a-tooltip>
-              <template #title>表格斑马纹</template>
-              <a-switch checked-children="开" un-checked-children="关"/>
-            </a-tooltip>
+            <a-button v-if="$slots['addItem']" type="primary" size="small" @click="onVisible('addItem','addFormState')"><plus-outlined/>新增</a-button>
             <a-tooltip>
               <template #title>刷新</template>
               <ReloadOutlined class="table-header-icon"/>
             </a-tooltip>
-            <a-tooltip>
+            <a-tooltip v-if="items.length>0">
               <template #title>列设置</template>
               <a-popover trigger="click" placement="bottomRight">
                 <template #title>
@@ -89,8 +73,43 @@
           </a-col>
         </a-row>
       </template>
-      <slot name="Columns"></slot>
+      <slot name="Columns">
+      </slot>
+      <a-table-column v-if="$slots['Action'] || deleteItemOk" title="操作" align="center">
+        <template #default="{ record }">
+        <slot name="Action">
+        </slot>
+        <a v-if="$slots['editItem']" @click="onVisible('editItem','editFormState')">编辑</a>
+        <a-divider v-if="$slots['editItem'] && deleteItemOk" type="vertical" />
+        <a-popconfirm
+            title="是否需要删除此项?"
+            ok-text="删除"
+            cancel-text="取消"
+            :okButtonProps="{'danger':true}"
+            @confirm="deleteItemOk(record)">
+          <a v-if="deleteItemOk" style="color: #FF4D4FFF;">删除</a>
+        </a-popconfirm>
+        </template>
+      </a-table-column>
     </a-table>
+    <a-modal v-if="$slots['addItem']" title="新增" v-model:visible="visible.addItem" autoFocusButton="ok" @ok="addItemOk" destroyOnClose>
+      <a-form
+          name="addItem"
+          :model="formState.addFormState"
+          autocomplete="off"
+      >
+        <slot name="AddItem" :formState="formState.addFormState"></slot>
+      </a-form>
+    </a-modal>
+    <a-modal v-if="$slots['editItem']" title="编辑" v-model:visible="visible.editItem" autoFocusButton="ok" @ok="editItemOk" destroyOnClose>
+        <a-form
+            name="editItem"
+            :model="formState.editFormState"
+            autocomplete="off"
+        >
+          <slot name="EditItem" :formState="formState.editFormState"></slot>
+        </a-form>
+    </a-modal>
   </section>
 </template>
 
@@ -109,11 +128,36 @@ import {Container, Draggable} from "vue3-smooth-dnd";
 export default {
   name: 'TdTable',
   props: {
+    title:{
+      type:String,
+      default() {
+        return ""
+      }
+    },
     columns: {
       type: Array,
       default() {
         return []
       }
+    },
+    addItemOk:{
+      type: Function,
+      default() {
+        return function (data) {
+
+        }
+      }
+    },
+    editItemOk:{
+      type: Function,
+      default() {
+        return function (data) {
+
+        }
+      }
+    },
+    deleteItemOk:{
+      type: Function,
     },
     loadDataComplete: {
       type: Function,
@@ -149,12 +193,19 @@ export default {
   data() {
     let search = Object.assign({}, this.searchData)
     return {
+
       items: [
-        {id: 1, data: "Princess Mononoke"},
-        {id: 2, data: "Spirited Away"},
-        {id: 3, data: "My Neighbor Totoro"},
-        {id: 4, data: "Howl's Moving Castle"}
       ],
+      formState:{
+        addFormState:{
+
+        },
+        editFormState:{}
+      },
+      visible:{
+        addItem:false,
+        editItem:false,
+      },
       searchForm: search,
       addForm: [],
       locale: {
@@ -164,7 +215,6 @@ export default {
       },
       spinning: false,
       selectedRowKeys: [],
-
       data: {
         records: [],
         pageSizeOptions: [
@@ -188,6 +238,11 @@ export default {
     }
   },
   methods: {
+    onVisible(visible,formState){
+      console.log(visible,formState)
+      this.formState[formState] = {}
+      this.visible[visible] = true
+    },
     onDrop(dropResult) {
       this.items = this.applyDrag(this.items, dropResult);
     },
@@ -206,9 +261,6 @@ export default {
       }
       return result;
     },
-    sortDirections(sort) {
-      console.log(sort)
-    },
     optionsConversion(value, options) {
       if (null === options) {
         return value
@@ -221,17 +273,17 @@ export default {
       return value;
     },
     handleTableChange(pagination, filters, sorter) {
-      console.log(pagination, filters, sorter)
-      if (sorter && sorter.field && sorter.order) {
-        this.searchForm.sorter = sorter.field + "," + sorter.order.replace("end", "")
+      console.log(sorter)
+      if (sorter && sorter.field) {
+        if (sorter.order){
+          this.searchForm.sorter = sorter.field + "," + sorter.order.replace("end","")
+        }else {
+          this.searchForm.sorter =undefined
+        }
       }
-      this.loadData(Object.assign(this.searchForm, {page: pagination.current, size: pagination.pageSize}))
-    },
-    onChange(page, pageSize) {
-      this.loadData({
-        page: page,
-        size: pageSize,
-      })
+      this.searchForm.page = pagination.current
+      this.searchForm.size = pagination.pageSize
+      this.loadData(this.searchForm)
     },
     onSearch() {
       this.loadData(this.searchForm)
@@ -284,7 +336,7 @@ export default {
 
 .table-search {
   background: #ffffff;
-  padding: 20px 0 10px 0;
+  padding: 20px 20px 10px 20px;
 }
 
 .table-header {
@@ -296,7 +348,8 @@ export default {
 }
 
 .table-title {
-  font-size: 18px;
+  font-size: 15px;
+  margin-left: 10px;
   font-weight: 500;
 }
 
@@ -311,4 +364,17 @@ export default {
   margin-right: 16px;
 
 }
+.table-striped{
+  background-color: #fafafa;
+}
+.table-search .ant-form-item .ant-form-item-control .ant-form-item-control-input .ant-form-item-control-input-content>.ant-input,.table-search .ant-form-item .ant-form-item-control .ant-form-item-control-input .ant-form-item-control-input-content>.ant-input-number{
+  width: 100%;
+}
+.table-search .ant-form-item{
+  width: 280px;
+}
+.table-search  .long-value{
+  width: auto;
+}
+
 </style>

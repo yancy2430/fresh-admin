@@ -28,47 +28,40 @@
         </a-card>
       </a-col>
       <a-col class='gutter-row' flex="4">
-        <a-card title='用户列表' style='height: 100%;' size="small">
-          <template v-slot:extra>
-            <a-tag class="tag-click" style="cursor: pointer" color="#2db7f5" @click="onAddUserClick">新增</a-tag>
+        <td-table
+            ref="table"
+            title="用户列表"
+            :data-source="parameter=>page(parameter)">
+          <template #Search="{formState}">
+            <a-form-item label="UID" name="id">
+              <a-input-number v-model:value="formState.id" />
+            </a-form-item>
+            <a-form-item label="姓名" name="orderNo">
+              <a-input v-model:value="formState.orderNo" />
+            </a-form-item>
+            <a-form-item label="用户名" name="bTime">
+              <a-input v-model:value="formState.bTime" />
+            </a-form-item>
+            <a-form-item label="手机号" name="platform">
+              <a-input-number v-model:value="formState.platform" />
+            </a-form-item>
           </template>
-          <td-table
-              ref="table"
-              :data-source="parameter=>page(parameter)"
-              :columns="columns">
-            <template v-slot:Search="{data}">
-              <a-form-item label="用户名" name="username">
-                <a-input v-model:value="data.username" placeholder="模糊搜索"/>
-              </a-form-item>
+            <template #Columns>
+              <a-table-column title="UID" data-index="id" :sorter="true" align="center" />
+              <a-table-column title="头像" data-index="avatar" />
+              <a-table-column title="姓名" data-index="name" />
+              <a-table-column title="用户名" data-index="username" />
+              <a-table-column title="手机号" data-index="phone" />
+              <a-table-column title="邮箱" data-index="email" />
+              <a-table-column title="用户状态" data-index="status" />
+              <a-table-column title="最后登录时间" data-index="lastLoginTime" />
+              <a-table-column title="操作" data-index="action" align="center">
+                <a>编辑</a>
+                <a-divider type="vertical" />
+                <a>禁用</a>
+              </a-table-column>
             </template>
-            <template v-slot:field-groups="{item}">
-              <span  v-if="item.groups!==null && item.groups.length>0">
-                <a-tag class="tag-btn" color="purple" v-for="(group,index) in item.groups" :key="index">
-                  {{ group?group.name:''}}
-                </a-tag>
-              </span>
-
-            </template>
-            <template v-slot:field-status="{item}">
-              <a-tag v-if="item.status" class="tag-btn" color="blue">正常</a-tag>
-              <a-tag v-else class="tag-btn" color="red">锁定</a-tag>
-            </template>
-            <template v-slot:field-lastLogin="{item}">
-              {{ item.lastLoginTime }} {{ item.lastLoginIp }}
-            </template>
-            <template v-slot:Action="{item,index}" class="action">
-              <a-tag class="tag-btn" color="blue" @click="onClickUserEdit(item,index)">编辑</a-tag>
-<!--              <a-popconfirm-->
-<!--                  @confirm="delUser(item)"-->
-<!--                  title="是否确定要删除此用户?"-->
-<!--                  ok-text="是"-->
-<!--                  cancel-text="否"-->
-<!--              >-->
-<!--                <a-tag class="tag-btn" color="error">删除</a-tag>-->
-<!--              </a-popconfirm>-->
-            </template>
-          </td-table>
-        </a-card>
+        </td-table>
       </a-col>
     </a-row>
     <a-modal destroyOnClose v-model:visible="userEdit.visible" :title="userEdit.selectUser.id?'编辑':'新增'+'用户'" :confirm-loading="userEdit.submitLoading"
@@ -161,58 +154,6 @@ export default {
         span: 14,
       },
       page,
-      columns: [
-        {
-          title: 'ID',
-          key: 'id',
-          align: 'center',
-          list: true,
-          width: 80
-        },
-        {
-          title: '用户名',
-          key: 'username',
-          list: true,
-          align: 'center',
-        },
-        {
-          title: '姓名',
-          key: 'name',
-          list: true,
-          align: 'center',
-        },
-        {
-          title: '角色',
-          key: 'groups',
-          align: 'center',
-          list: true,
-        },
-        {
-          title: '手机号',
-          align: 'center',
-          list: true,
-          key: 'phone'
-        },
-        {
-          title: '邮箱',
-          align: 'center',
-          list: true,
-          key: 'email'
-        },
-        {
-          title: '状态',
-          align: 'center',
-          list: true,
-          key: 'status'
-        },
-        {
-          title: '最后登录记录',
-          key: 'lastLogin',
-          list: true,
-          align: 'center',
-          width: 160,
-        }
-      ],
       treeExpandedKeys: [],
       showLine: true,
       SHOW_CHILD: TreeSelect.SHOW_CHILD,
@@ -347,4 +288,7 @@ export default {
   max-height: 320px;
   overflow: auto;
 }
+/*:deep(.table-title){*/
+/*  font-size: 16px;*/
+/*}*/
 </style>
